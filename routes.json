@@ -1,0 +1,14 @@
+{
+  "prototypes": [
+    {
+      "id": "example-prototype",
+      "title": "Example Prototype",
+      "desc": "A placeholder card so the grid isn't empty on first boot.",
+      "tag": "utility",
+      "hasBackend": false,
+      "entrypoint": "index.html",
+      "shareCode": "AB12CD",
+      "addedAt": "2026-07-22"
+    }
+  ]
+}
