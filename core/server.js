@@ -117,17 +117,22 @@ async function mountPrototypes() {
   const { prototypes = [] } = JSON.parse(raw);
 
   for (const proto of prototypes) {
+    // The folder is always ROOT/<id>/ entrypoint never changes where the prototype lives, only what's served as its "root" request.
     const folder = path.join(ROOT, proto.id);
     const mountPath = `/p/${proto.id}`;
+    const entrypoint = proto.entrypoint || 'index.html';
 
-    app.use(mountPath, requireSiteAuth, express.static(folder));
+    if (proto.hasBackend) {
+      // Backend prototype: static assets (css/js/images) in the folder are
+      // still served directly, but the entrypoint module owns the root
+      // request and any other dynamic routes. Lazy-loaded on first hit.
+      app.use(mountPath, requirePrototypeAccess(proto.id), express.static(folder));
 
-    if (proto.hasBackend && proto.entrypoint) {
       let routerPromise = null;
-      app.use(mountPath, requireSiteAuth, async (req, res, next) => {
+      app.use(mountPath, requirePrototypeAccess(proto.id), async (req, res, next) => {
         try {
           if (!routerPromise) {
-            const entryFile = path.join(folder, proto.entrypoint);
+            const entryFile = path.join(folder, entrypoint);
             routerPromise = import(entryFile).then((m) => m.default || m.router);
           }
           const router = await routerPromise;
@@ -137,6 +142,13 @@ async function mountPrototypes() {
           res.status(500).json({ error: 'prototype error', prototype: proto.id });
         }
       });
+    } else {
+      // Static-only prototype: entrypoint is the file served at the mount
+      // root (what a card click lands on). Everything else in the folder
+      // is still reachable at its own path — this only controls the index.
+      app.use(mountPath, requirePrototypeAccess(proto.id), express.static(folder, {
+        index: entrypoint,
+      }));
     }
   }
 }
