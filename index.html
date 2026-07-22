@@ -29,7 +29,8 @@ body { font-family:'Instrument Sans', sans-serif; background:var(--bg); color:va
   background:var(--bar); border-bottom:1px solid var(--bar-b);
 }
 .bar-clock { display:flex; align-items:center; gap:10px; }
-.logo { font-size:14px; font-weight:500; letter-spacing:3px; color:var(--fg); }
+.logo { font-family:'Instrument Serif', serif; font-style:normal; font-size:15px; font-weight:400; letter-spacing:4px; color:var(--fg); cursor:default; transition:letter-spacing .2s ease; white-space:nowrap; }
+.logo:hover { letter-spacing:2px; }
 .bar-sep { font-size:12px; color:var(--dim); }
 .bar-time { font-size:12px; letter-spacing:1px; color:var(--dim); cursor:pointer; user-select:none; }
 .bar-time:hover { color:var(--fg); }
@@ -176,10 +177,15 @@ footer { text-align:center; padding:40px 20px; font-size:12px; color:var(--dim);
 <div class="overlay open" id="site-gate">
   <div class="panel">
     <h2>Locked</h2>
-    <div class="sub">Enter the site password to continue.</div>
-    <div class="field"><input type="password" id="site-pw" placeholder="Password" onkeydown="if(event.key==='Enter')submitSitePw()"></div>
-    <button class="btn" onclick="submitSitePw()">Unlock</button>
+    <div class="sub" id="site-gate-sub">Enter the site password to continue.</div>
+    <div class="field" id="site-pw-field"><input type="password" id="site-pw" placeholder="Password" onkeydown="if(event.key==='Enter')submitSitePw()"></div>
+    <div class="field" id="share-code-field" style="display:none"><input type="text" id="share-code" placeholder="Share code" onkeydown="if(event.key==='Enter')submitShareCode()"></div>
+    <button class="btn" id="site-gate-btn" onclick="submitSitePw()">Unlock</button>
     <div class="err" id="site-err"></div>
+    <div class="filter-group" style="justify-content:center;margin-top:14px">
+      <button class="spill on" id="gate-mode-password" onclick="setGateMode('password')">Password</button>
+      <button class="spill" id="gate-mode-share" onclick="setGateMode('share')">Share Code</button>
+    </div>
   </div>
 </div>
 
@@ -224,8 +230,8 @@ footer { text-align:center; padding:40px 20px; font-size:12px; color:var(--dim);
       <div class="field"><label>Title (card name)</label><input id="imp-title" placeholder="My New Prototype"></div>
       <div class="field"><label>Description</label><input id="imp-desc" placeholder="One line for the card"></div>
       <div class="field"><label>Category tag</label><input id="imp-tag" placeholder="game / utility / visual / ..."></div>
-      <div class="field"><label>Has backend? (mounts a router)</label><select id="imp-hasbackend"><option value="false">No — static only</option><option value="true">Yes</option></select></div>
-      <div class="field" id="imp-entry-field"><label>Entrypoint file</label><input id="imp-entrypoint" placeholder="index.html or server.js"></div>
+      <div class="field"><label>Has backend? (mounts a router)</label><select id="imp-hasbackend" onchange="toggleEntrypointHint()"><option value="false">No, static only</option><option value="true">Yes</option></select></div>
+      <div class="field" id="imp-entry-field"><label id="imp-entry-label">Entrypoint file (served at the card link)</label><input id="imp-entrypoint" placeholder="index.html"></div>
       <button class="btn secondary" onclick="doPreviewImport()">Preview changes</button>
     </div>
 
@@ -282,6 +288,27 @@ async function submitSitePw() {
   const r = await fetch('/api/auth/site', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pw }) });
   if (r.ok) { closeOverlay('site-gate'); boot(); }
   else document.getElementById('site-err').textContent = 'Wrong password.';
+}
+
+let gateMode = 'password';
+function setGateMode(mode) {
+  gateMode = mode;
+  const isShare = mode === 'share';
+  document.getElementById('gate-mode-password').classList.toggle('on', !isShare);
+  document.getElementById('gate-mode-share').classList.toggle('on', isShare);
+  document.getElementById('site-pw-field').style.display = isShare ? 'none' : 'block';
+  document.getElementById('share-code-field').style.display = isShare ? 'block' : 'none';
+  document.getElementById('site-gate-sub').textContent = isShare ? 'Enter your share code to view that prototype.' : 'Enter the site password to continue.';
+  document.getElementById('site-gate-btn').onclick = isShare ? submitShareCode : submitSitePw;
+  document.getElementById('site-err').textContent = '';
+}
+
+async function submitShareCode() {
+  const code = document.getElementById('share-code').value;
+  const r = await fetch('/api/auth/share', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
+  const d = await r.json();
+  if (r.ok && d.ok) window.location.href = d.url;
+  else document.getElementById('site-err').textContent = d.error || 'Invalid code.';
 }
 
 async function submitGitPw() {
@@ -392,6 +419,7 @@ document.addEventListener('DOMContentLoaded', checkAuth);
 
 async function openAdmin() {
   document.getElementById('admin-overlay').classList.add('open');
+  toggleEntrypointHint();
   await refreshRepoList();
   refreshPrototypeSelects();
 }
@@ -447,6 +475,19 @@ function toggleImportTargetInput() {
   document.getElementById('imp-existing-field').style.display = mode==='existing' ? 'block':'none';
 }
 
+function toggleEntrypointHint() {
+  const hasBackend = document.getElementById('imp-hasbackend').value === 'true';
+  const label = document.getElementById('imp-entry-label');
+  const input = document.getElementById('imp-entrypoint');
+  if (hasBackend) {
+    label.textContent = 'Entrypoint file (router module, handles the card link and any routes)';
+    input.placeholder = 'server.js';
+  } else {
+    label.textContent = 'Entrypoint file (served at the card link)';
+    input.placeholder = 'index.html';
+  }
+}
+
 function renderDiff(diff) {
   const box = document.getElementById('diff-box');
   box.style.display = 'block';
@@ -482,7 +523,7 @@ async function doPreviewImport() {
         desc: document.getElementById('imp-desc').value.trim(),
         tag: document.getElementById('imp-tag').value.trim() || 'misc',
         hasBackend: document.getElementById('imp-hasbackend').value === 'true',
-        entrypoint: document.getElementById('imp-entrypoint').value.trim() || 'index.html',
+        entrypoint: document.getElementById('imp-entrypoint').value.trim() || (document.getElementById('imp-hasbackend').value === 'true' ? 'server.js' : 'index.html'),
       } : undefined,
     }};
     setStatus(`${diff.fileCount} file(s) in source. Review above, then confirm.`);
