@@ -9,13 +9,14 @@ import * as git from './git.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const PORT = process.env.PORT || 3000;
+if (!process.env.SESSION_SECRET) throw new Error('SESSION_SECRET is not set');
 
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'change-me-in-production',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 12 },
@@ -117,7 +118,8 @@ async function mountPrototypes() {
   const { prototypes = [] } = JSON.parse(raw);
 
   for (const proto of prototypes) {
-    // The folder is always ROOT/<id>/ entrypoint never changes where the prototype lives, only what's served as its "root" request.
+    // The folder is always ROOT/<id> — entrypoint never changes where the
+    // prototype lives, only what's served as its "root" request.
     const folder = path.join(ROOT, proto.id);
     const mountPath = `/p/${proto.id}`;
     const entrypoint = proto.entrypoint || 'index.html';
