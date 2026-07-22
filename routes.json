@@ -1,7 +1,7 @@
 {
   "prototypes": [
     {
-      "id": "example-prototype",
+      "id": "prototype1",
       "title": "Example Prototype",
       "desc": "A placeholder card so the grid isn't empty on first boot.",
       "tag": "utility",
