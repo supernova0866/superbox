@@ -22,6 +22,7 @@ app.use(
   })
 );
 
+// ── Two-tier auth ─────────────────────────────────────────────────────────
 app.post('/api/auth/site', (req, res) => {
   if (req.body?.password && req.body.password === process.env.SITE_PASSWORD) {
     req.session.siteAuthed = true;
@@ -43,6 +44,22 @@ app.get('/api/auth/status', (req, res) => {
   res.json({ site: !!req.session.siteAuthed, git: !!req.session.gitAuthed });
 });
 
+// Share codes grant view access to ONE prototype only — never the full
+// grid, routes.json, or any other prototype's folder.
+app.post('/api/auth/share', async (req, res) => {
+  const code = (req.body?.code || '').trim().toUpperCase();
+  if (!code) return res.status(400).json({ ok: false, error: 'Enter a code.' });
+
+  const raw = await fs.readFile(path.join(ROOT, 'routes.json'), 'utf8').catch(() => '{"prototypes":[]}');
+  const { prototypes = [] } = JSON.parse(raw);
+  const proto = prototypes.find((p) => p.shareCode && p.shareCode.toUpperCase() === code);
+  if (!proto) return res.status(404).json({ ok: false, error: 'Invalid code.' });
+
+  req.session.sharedPrototypes = req.session.sharedPrototypes || [];
+  if (!req.session.sharedPrototypes.includes(proto.id)) req.session.sharedPrototypes.push(proto.id);
+  res.json({ ok: true, url: `/p/${proto.id}` });
+});
+
 function requireSiteAuth(req, res, next) {
   if (req.session.siteAuthed) return next();
   res.status(401).json({ error: 'locked' });
@@ -51,10 +68,20 @@ function requireGitAuth(req, res, next) {
   if (req.session.gitAuthed) return next();
   res.status(401).json({ error: 'git-locked' });
 }
+function requirePrototypeAccess(protoId) {
+  return (req, res, next) => {
+    if (req.session.siteAuthed) return next();
+    if ((req.session.sharedPrototypes || []).includes(protoId)) return next();
+    res.status(401).json({ error: 'locked' });
+  };
+}
 
+// index.html always loads (it renders its own password gate client-side).
+// Everything else — including routes.json — requires the site session.
 app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 app.get('/routes.json', requireSiteAuth, (req, res) => res.sendFile(path.join(ROOT, 'routes.json')));
 
+// ── Git admin API (site auth + git auth both required) ───────────────────
 const gitRouter = express.Router();
 gitRouter.use(requireSiteAuth, requireGitAuth);
 
@@ -81,6 +108,10 @@ gitRouter.post('/remove', async (req, res, next) => {
 });
 app.use('/api/git', gitRouter);
 
+// ── Mount each prototype from routes.json ────────────────────────────────
+// Static assets are always served; a backend router is only lazy-loaded on
+// first request if the prototype declares hasBackend + entrypoint, so idle
+// RAM only reflects what's actually being used.
 async function mountPrototypes() {
   const raw = await fs.readFile(path.join(ROOT, 'routes.json'), 'utf8').catch(() => '{"prototypes":[]}');
   const { prototypes = [] } = JSON.parse(raw);
@@ -115,6 +146,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'internal error' });
 });
 
+// Keep one bad prototype from taking the whole playground down.
 process.on('uncaughtException', (e) => console.error('uncaughtException:', e));
 process.on('unhandledRejection', (e) => console.error('unhandledRejection:', e));
 
