@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prototyper</title>
+<title>$uperbox</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -134,7 +134,7 @@ footer { text-align:center; padding:40px 20px; font-size:12px; color:var(--dim);
 
 <div class="bar">
   <div class="bar-clock">
-    <span class="logo">PROTOTYPER</span>
+    <span class="logo" id="logo-text" onmouseenter="expandLogo()" onmouseleave="collapseLogo()">$UPERBOX</span>
     <span class="bar-sep">|</span>
     <span class="bar-time" id="bar-time" onclick="cycleTimeFormat()">00:00:00</span>
   </div>
@@ -143,7 +143,7 @@ footer { text-align:center; padding:40px 20px; font-size:12px; color:var(--dim);
 
 <div id="gl">
   <div class="grid-head">
-    <h1>PROTOTYPER</h1>
+    <h1>$UPERBOX</h1>
     <p>a monorepo of small, standalone experiments</p>
   </div>
 
@@ -401,7 +401,13 @@ function formatTime(d) {
   const hh=String(d.getHours()).padStart(2,'0'), mm=String(d.getMinutes()).padStart(2,'0'), ss=String(d.getSeconds()).padStart(2,'0');
   return `${hh}:${mm}:${ss}`;
 }
-function cycleTimeFormat() {} // reserved
+function cycleTimeFormat() {}
+function expandLogo() {
+  document.getElementById('logo-text').textContent = '$UPERNOVA SANDBOX';
+}
+function collapseLogo() {
+  document.getElementById('logo-text').textContent = '$UPERBOX';
+}
 function startClock() {
   const el = document.getElementById('bar-time');
   const tick = ()=>el.textContent = formatTime(new Date());
