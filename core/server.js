@@ -23,7 +23,6 @@ app.use(
   })
 );
 
-// ── Two-tier auth ─────────────────────────────────────────────────────────
 app.post('/api/auth/site', (req, res) => {
   if (req.body?.password && req.body.password === process.env.SITE_PASSWORD) {
     req.session.siteAuthed = true;
@@ -45,8 +44,6 @@ app.get('/api/auth/status', (req, res) => {
   res.json({ site: !!req.session.siteAuthed, git: !!req.session.gitAuthed });
 });
 
-// Share codes grant view access to ONE prototype only — never the full
-// grid, routes.json, or any other prototype's folder.
 app.post('/api/auth/share', async (req, res) => {
   const code = (req.body?.code || '').trim().toUpperCase();
   if (!code) return res.status(400).json({ ok: false, error: 'Enter a code.' });
@@ -77,12 +74,9 @@ function requirePrototypeAccess(protoId) {
   };
 }
 
-// index.html always loads (it renders its own password gate client-side).
-// Everything else — including routes.json — requires the site session.
 app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
 app.get('/routes.json', requireSiteAuth, (req, res) => res.sendFile(path.join(ROOT, 'routes.json')));
 
-// ── Git admin API (site auth + git auth both required) ───────────────────
 const gitRouter = express.Router();
 gitRouter.use(requireSiteAuth, requireGitAuth);
 
@@ -107,27 +101,21 @@ gitRouter.post('/confirm-push', async (req, res, next) => {
 gitRouter.post('/remove', async (req, res, next) => {
   try { res.json(await git.removePrototype(req.body.folder)); } catch (e) { next(e); }
 });
+gitRouter.post('/restart', async (req, res, next) => {
+  try { res.json(await git.restartService()); } catch (e) { next(e); }
+});
 app.use('/api/git', gitRouter);
 
-// ── Mount each prototype from routes.json ────────────────────────────────
-// Static assets are always served; a backend router is only lazy-loaded on
-// first request if the prototype declares hasBackend + entrypoint, so idle
-// RAM only reflects what's actually being used.
 async function mountPrototypes() {
   const raw = await fs.readFile(path.join(ROOT, 'routes.json'), 'utf8').catch(() => '{"prototypes":[]}');
   const { prototypes = [] } = JSON.parse(raw);
 
   for (const proto of prototypes) {
-    // The folder is always ROOT/<id> — entrypoint never changes where the
-    // prototype lives, only what's served as its "root" request.
     const folder = path.join(ROOT, proto.id);
     const mountPath = `/p/${proto.id}`;
     const entrypoint = proto.entrypoint || 'index.html';
 
     if (proto.hasBackend) {
-      // Backend prototype: static assets (css/js/images) in the folder are
-      // still served directly, but the entrypoint module owns the root
-      // request and any other dynamic routes. Lazy-loaded on first hit.
       app.use(mountPath, requirePrototypeAccess(proto.id), express.static(folder));
 
       let routerPromise = null;
@@ -145,9 +133,6 @@ async function mountPrototypes() {
         }
       });
     } else {
-      // Static-only prototype: entrypoint is the file served at the mount
-      // root (what a card click lands on). Everything else in the folder
-      // is still reachable at its own path — this only controls the index.
       app.use(mountPath, requirePrototypeAccess(proto.id), express.static(folder, {
         index: entrypoint,
       }));
@@ -160,7 +145,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'internal error' });
 });
 
-// Keep one bad prototype from taking the whole playground down.
 process.on('uncaughtException', (e) => console.error('uncaughtException:', e));
 process.on('unhandledRejection', (e) => console.error('unhandledRejection:', e));
 
