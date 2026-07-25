@@ -31,9 +31,20 @@ async function ghGet(url) {
   const res = await fetch(url, { headers: ghHeaders() });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
-    throw new Error(`GitHub GET ${url} failed: ${res.status} ${body}`);
+    const err = new Error(`GitHub GET ${url} failed: ${res.status} ${body}`);
+    err.status = res.status;
+    throw err;
   }
   return res.json();
+}
+
+async function ghGetOrNull(url) {
+  try {
+    return await ghGet(url);
+  } catch (e) {
+    if (e.status === 404) return null;
+    throw e;
+  }
 }
 
 async function ghPut(url, body) {
@@ -155,7 +166,7 @@ export async function previewImport({ owner, repo, ref, targetFolder }) {
         fs.readFile(srcFile, 'utf8').catch(() => null),
         fs.readFile(dstFile, 'utf8').catch(() => null),
       ]);
-      if (a === null || b === null) { updated.push(rel); continue; } // binary — assume changed, be safe
+      if (a === null || b === null) { updated.push(rel); continue; }
       if (normalize(a, rel) === normalize(b, rel)) unchanged.push(rel);
       else updated.push(rel);
     }
@@ -171,7 +182,7 @@ export async function confirmImport({ owner, repo, ref, targetFolder, isNew, rou
   try {
     const targetPath = path.join(ROOT, targetFolder);
     await fs.mkdir(targetPath, { recursive: true });
-    await fs.cp(extractDir, targetPath, { recursive: true, force: true }); // overwrite, no delete pass
+    await fs.cp(extractDir, targetPath, { recursive: true, force: true });
 
     if (isNew && routeMeta) await upsertRoute(routeMeta);
 
@@ -208,7 +219,7 @@ export async function removeRoute(id) {
 export async function removePrototype(folderName) {
   await fs.rm(path.join(ROOT, folderName), { recursive: true, force: true });
   await removeRoute(folderName);
-  await deleteAllEnvsFor(folderName).catch(() => {}); // best-effort if Turso isn't configured
+  await deleteAllEnvsFor(folderName).catch(() => {});
   const result = await gitCommitAndPush(`Remove prototype ${folderName}`);
   return { ok: true, ...result };
 }
@@ -221,10 +232,7 @@ export async function previewPush({ owner, repo, sourceFolder }) {
   const created = [], updated = [], unchanged = [];
   for (const rel of localFiles) {
     const ghPath = rel.split(path.sep).join('/');
-    let existing = null;
-    try {
-      existing = await ghGet(`${GH}/repos/${owner}/${repo}/contents/${encodeURIComponent(ghPath)}`);
-    } catch {  }
+    const existing = await ghGetOrNull(`${GH}/repos/${owner}/${repo}/contents/${encodeURIComponent(ghPath)}`);
 
     if (!existing) { created.push(rel); continue; }
     const localContent = await fs.readFile(path.join(sourcePath, rel), 'utf8').catch(() => null);
@@ -249,9 +257,13 @@ export async function confirmPush({ owner, repo, sourceFolder, branch, commitMes
     const apiUrl = `${GH}/repos/${owner}/${repo}/contents/${encodeURIComponent(ghPath)}`;
     let sha;
     try {
-      const existing = await ghGet(apiUrl);
-      sha = existing.sha;
-    } catch {  }
+      const existing = await ghGetOrNull(apiUrl);
+      sha = existing?.sha;
+    } catch (e) {
+      console.error(`[confirmPush] lookup failed for ${ghPath}:`, e.message);
+      failed++;
+      continue;
+    }
 
     try {
       const buf = await fs.readFile(path.join(sourcePath, rel));
@@ -264,7 +276,8 @@ export async function confirmPush({ owner, repo, sourceFolder, branch, commitMes
         ...(sha ? { sha } : {}),
       });
       sha ? updated++ : created++;
-    } catch {
+    } catch (e) {
+      console.error(`[confirmPush] put failed for ${ghPath}:`, e.message);
       failed++;
     }
   }
@@ -275,15 +288,41 @@ export async function gitCommitAndPush(message) {
   const git = simpleGit(ROOT);
   await git.addConfig('user.name', process.env.GIT_AUTHOR_NAME || 'prototyper-bot');
   await git.addConfig('user.email', process.env.GIT_AUTHOR_EMAIL || 'prototyper@bot.local');
+
+  const branch = process.env.GIT_BRANCH || process.env.MONOREPO_BRANCH || 'main';
+
+  const preStatus = await git.status();
+  if (preStatus.detached) {
+    await git.fetch('origin', branch);
+    try {
+      await git.checkout(branch);
+    } catch {
+      await git.checkoutBranch(branch, `origin/${branch}`);
+    }
+  }
+
   await git.add('.');
   const status = await git.status();
   const dirty = status.staged.length || status.created.length || status.modified.length || status.deleted.length;
   if (!dirty) return { skipped: true };
 
   await git.commit(message);
-  await git.pull({ '--rebase': 'true' }).catch(() => {}); // best-effort, guards against drift between deploys
-  await git.push();
+  await git.pull('origin', branch, { '--rebase': 'true' }).catch(() => {});
+  await git.push('origin', branch);
   return { skipped: false };
+}
+
+export async function restartService() {
+  const hookUrl = process.env.RENDER_DEPLOY_HOOK_URL;
+  if (!hookUrl) {
+    throw new Error('RENDER_DEPLOY_HOOK_URL is not set — cannot trigger restart.');
+  }
+  const res = await fetch(hookUrl, { method: 'POST' });
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Render deploy hook failed: ${res.status} ${body}`);
+  }
+  return { ok: true };
 }
 
 export async function ensureAuthenticatedRemote() {
