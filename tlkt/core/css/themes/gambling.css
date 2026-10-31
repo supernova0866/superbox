@@ -1,0 +1,35 @@
+/* =========================================================
+   Gambling™ — no fixed colors here on purpose. gambling-theme.js
+   picks black or white as --bg first, then rolls every other
+   token relative to that base and writes them inline on
+   [data-theme="gambling"] via style properties. This file just
+   handles structure + the reroll transition.
+   ========================================================= */
+
+[data-theme="gambling"] #nova-starfield {
+  display: none;
+}
+
+[data-theme="gambling"] body,
+[data-theme="gambling"] .surface,
+[data-theme="gambling"] .card {
+  transition:
+    background-color var(--dur-slow) var(--ease-out),
+    color var(--dur-slow) var(--ease-out),
+    border-color var(--dur-slow) var(--ease-out);
+}
+
+/* fallback so it's never unstyled before JS runs on first paint */
+[data-theme="gambling"] {
+  --bg: #0a0a0a;
+  --bg-elevated: #141414;
+  --surface: #1a1a1a;
+  --surface-alt: #222222;
+  --border: #333333;
+  --text: #f5f5f5;
+  --text-dim: #b0b0b0;
+  --text-faint: #777777;
+  --accent-a: #ff5fa2;
+  --accent-b: #5fc9ff;
+  --accent-gradient: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+}

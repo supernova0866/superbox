@@ -1,0 +1,6 @@
+name = "nova-user-lookup"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Set via: wrangler secret put DISCORD_BOT_TOKEN
+# Separate token from Wevo — do not reuse Wevo's token here.

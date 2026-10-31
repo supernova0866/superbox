@@ -1,0 +1,41 @@
+/* =========================================================
+   Peak Theme™ — the default. Dark cosmic, starfield behind
+   everything, nova-burst violet/magenta gradient as signature.
+   ========================================================= */
+
+[data-theme="peak"] {
+  --bg: #090714;
+  --bg-elevated: #0f0c22;
+  --surface: #14122a;
+  --surface-alt: #1c1a38;
+  --border: #2a2750;
+
+  --text: #eee9ff;
+  --text-dim: #a29bc4;
+  --text-faint: #6b6591;
+
+  --accent-a: #8b5cf6;
+  --accent-b: #ff5fa2;
+  --accent-gradient: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+
+  --success: #4ade80;
+  --error: #ff5c7a;
+  --warning: #ffb84d;
+  --info: #5fc9ff;
+
+  --shadow-color: 260 60% 3%;
+}
+
+[data-theme="peak"] body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, hsl(265 70% 20% / 0.35), transparent),
+    var(--bg);
+}
+
+/* Starfield canvas sits fixed behind all content */
+[data-theme="peak"] #nova-starfield {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-starfield);
+  pointer-events: none;
+}

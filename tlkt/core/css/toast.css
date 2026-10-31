@@ -1,0 +1,70 @@
+/* Nova's Toolkit — Toasts */
+
+#nova-toast-stack {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
+.nova-toast {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 220px;
+  max-width: 340px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  pointer-events: auto;
+  transform: translateY(0);
+  opacity: 1;
+  transition: bottom var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+}
+
+.nova-toast[data-entering="true"] {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.nova-toast[data-leaving="true"] {
+  opacity: 0;
+}
+
+.nova-toast::before {
+  content: "";
+  width: 6px;
+  align-self: stretch;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  background: var(--accent-gradient);
+}
+
+.nova-toast[data-type="success"]::before { background: var(--success); }
+.nova-toast[data-type="error"]::before { background: var(--error); }
+.nova-toast[data-type="warning"]::before { background: var(--warning); }
+.nova-toast[data-type="info"]::before { background: var(--info); }
+
+.nova-toast-message {
+  flex: 1;
+}
+
+.nova-toast-count {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--text-faint);
+  background: var(--surface-alt);
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+}

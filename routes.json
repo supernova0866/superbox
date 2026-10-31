@@ -9,6 +9,15 @@
       "entrypoint": "index.html",
       "shareCode": "AB12CD",
       "addedAt": "2026-07-22"
+    },
+    {
+      "addedAt": "2026-10-31",
+      "id": "tlkt",
+      "title": "toolkit",
+      "desc": "Nova's toolkit",
+      "tag": "misc",
+      "hasBackend": false,
+      "entrypoint": "index.html"
     }
   ]
 }

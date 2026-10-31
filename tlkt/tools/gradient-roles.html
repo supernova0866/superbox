@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gradient Role Colors — Nova's Toolkit</title>
+<meta name="description" content="Pick a vibe, get two hex stops that work together as a Discord gradient role color.">
+
+<script src="../core/js/theme-engine.js"></script>
+<link rel="stylesheet" href="../core/css/reset.css">
+<link rel="stylesheet" href="../core/css/variables.css">
+<link rel="stylesheet" href="../core/css/themes/peak.css">
+<link rel="stylesheet" href="../core/css/themes/flashbang.css">
+<link rel="stylesheet" href="../core/css/themes/crime-against-color.css">
+<link rel="stylesheet" href="../core/css/themes/gambling.css">
+<link rel="stylesheet" href="../core/css/nav.css">
+<link rel="stylesheet" href="../core/css/layout.css">
+<link rel="stylesheet" href="../core/css/toast.css">
+
+<style>
+  .gr-theme-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+  }
+  .gr-theme-pill {
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+    transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+  }
+  .gr-theme-pill:hover { color: var(--text); }
+  .gr-theme-pill[aria-pressed="true"] {
+    border-color: var(--accent-a);
+    color: var(--text);
+    background: var(--surface-alt);
+  }
+
+  .gr-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .gr-hue-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex: 1;
+    min-width: 220px;
+  }
+  .gr-hue-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent-a);
+  }
+  .gr-lock-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .gr-swatches {
+    display: flex;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+  }
+  .gr-swatch-card {
+    flex: 1;
+    min-width: 160px;
+  }
+  .gr-swatch-color {
+    height: 90px;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-3);
+    border: 1px solid var(--border);
+  }
+  .gr-swatch-hex {
+    font-family: var(--font-mono);
+    font-size: var(--fs-md);
+    margin-bottom: var(--space-2);
+  }
+
+  .gr-preview-wrap {
+    background: #313338;
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+  }
+  .gr-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
+  .gr-preview-row:hover { background: #35373c; }
+  .gr-preview-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #444, #222);
+    flex-shrink: 0;
+  }
+  .gr-preview-name {
+    font-weight: 600;
+    font-size: 15px;
+    background: linear-gradient(90deg, var(--gr-hex1, #8b5cf6), var(--gr-hex2, #ff5fa2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .gr-preview-big {
+    margin-top: var(--space-5);
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 6vw, 3rem);
+    font-weight: 700;
+    background: linear-gradient(90deg, var(--gr-hex1, #8b5cf6), var(--gr-hex2, #ff5fa2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .gr-preview-label {
+    font-size: var(--fs-xs);
+    color: #949ba4;
+    text-align: center;
+    margin-top: var(--space-2);
+  }
+
+  .gr-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+    flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="nova-starfield"></canvas>
+
+<button class="nova-hamburger" id="nova-hamburger" aria-expanded="false" aria-controls="nova-sidebar" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<div class="nova-nav-overlay" id="nova-nav-overlay"></div>
+
+<nav class="nova-sidebar" id="nova-sidebar" data-open="false">
+  <div class="nova-sidebar-brand">Nova's Toolkit</div>
+
+  <div class="nova-sidebar-nav">
+    <a class="nova-sidebar-link" href="../index.html">Home</a>
+
+    <div class="nova-sidebar-section-label">Tools</div>
+    <a class="nova-sidebar-link" href="timestamp.html">Timestamp Generator</a>
+    <a class="nova-sidebar-link" href="embed-previewer.html">Embed Previewer</a>
+    <a class="nova-sidebar-link" href="gradient-roles.html">Gradient Role Colors</a>
+    <a class="nova-sidebar-link" href="user-lookup.html">User Lookup</a>
+  </div>
+
+  <div class="nova-sidebar-themes">
+    <div class="nova-sidebar-section-label">Theme</div>
+    <button class="nova-theme-btn" data-theme-choice="peak">
+      <span class="nova-theme-swatch" style="background:#8b5cf6"></span> Peak Theme™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="flashbang">
+      <span class="nova-theme-swatch" style="background:#ec4899"></span> Flashbang™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="crime">
+      <span class="nova-theme-swatch" style="background:#39ff14"></span> Crime Against Color Theory™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="gambling">
+      <span class="nova-theme-swatch" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"></span> Gambling™
+    </button>
+  </div>
+</nav>
+
+<main class="nova-page">
+  <div class="nova-content">
+    <p class="nova-eyebrow">Tool</p>
+    <h1 class="nova-h1">Gradient Role <span class="accent">Colors</span></h1>
+    <p class="nova-lede">Pick a vibe, get two hex stops built to actually work together — Discord gradient roles only take 2 colors, so every pixel of that pairing counts.</p>
+
+    <div class="gr-theme-picker" id="gr-theme-picker">
+      <button class="gr-theme-pill" data-theme-name="soft" aria-pressed="true">Soft</button>
+      <button class="gr-theme-pill" data-theme-name="vibrant" aria-pressed="false">Vibrant</button>
+      <button class="gr-theme-pill" data-theme-name="sunset" aria-pressed="false">Sunset</button>
+      <button class="gr-theme-pill" data-theme-name="monochrome" aria-pressed="false">Monochrome</button>
+      <button class="gr-theme-pill" data-theme-name="pastel" aria-pressed="false">Pastel</button>
+    </div>
+
+    <div class="gr-controls">
+      <div class="gr-hue-row">
+        <label for="gr-hue" style="font-size:var(--fs-sm); color:var(--text-dim); white-space:nowrap;">Base hue</label>
+        <input type="range" id="gr-hue" min="0" max="359" value="260">
+        <span id="gr-hue-val" style="font-family:var(--font-mono); font-size:var(--fs-sm); width:34px;">260°</span>
+      </div>
+      <label class="gr-lock-toggle">
+        <input type="checkbox" id="gr-lock-hue" style="width:auto;"> Lock hue on reroll
+      </label>
+      <button class="btn btn--primary" id="gr-reroll" type="button">Reroll</button>
+    </div>
+
+    <div class="gr-swatches">
+      <div class="card gr-swatch-card">
+        <div class="gr-swatch-color" id="gr-swatch1"></div>
+        <div class="gr-swatch-hex" id="gr-hex1">#000000</div>
+        <button class="btn btn--ghost" data-copy-hex="1" style="width:100%;">Copy</button>
+      </div>
+      <div class="card gr-swatch-card">
+        <div class="gr-swatch-color" id="gr-swatch2"></div>
+        <div class="gr-swatch-hex" id="gr-hex2">#000000</div>
+        <button class="btn btn--ghost" data-copy-hex="2" style="width:100%;">Copy</button>
+      </div>
+    </div>
+
+    <div class="gr-preview-wrap">
+      <div class="gr-preview-row">
+        <div class="gr-preview-avatar"></div>
+        <div class="gr-preview-name" id="gr-preview-name">SomeUsername</div>
+      </div>
+      <div class="gr-preview-big" id="gr-preview-big">Gradient Role</div>
+      <div class="gr-preview-label">Simulated Discord member-list + role settings rendering</div>
+    </div>
+
+    <div class="gr-actions">
+      <button class="btn btn--primary" id="gr-copy-both" type="button">Copy both hex codes</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  window.NOVA_DOODLES = [];
+</script>
+<script src="../core/js/gambling-theme.js"></script>
+<script src="../core/js/nav.js"></script>
+<script src="../core/js/starfield.js"></script>
+<script src="../core/js/toast.js"></script>
+
+<script>
+(function () {
+  const el = (id) => document.getElementById(id);
+  const hueSlider = el("gr-hue");
+  const hueVal = el("gr-hue-val");
+  const lockHue = el("gr-lock-hue");
+  const themePicker = el("gr-theme-picker");
+
+  let activeTheme = "soft";
+  let current = null; // { h1,s1,l1,h2,s2,l2 }
+
+  function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function randSign() {
+    return Math.random() < 0.5 ? -1 : 1;
+  }
+  function wrapHue(h) {
+    return ((h % 360) + 360) % 360;
+  }
+
+  function hslToHex(h, s, l) {
+    s /= 100; l /= 100;
+    const k = (n) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, "0");
+    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`.toUpperCase();
+  }
+
+  const THEME_RULES = {
+    soft: (base) => {
+      const hue = wrapHue(base + rand(-10, 10));
+      return { h1: base, s1: rand(30, 50), l1: rand(60, 70), h2: hue, s2: rand(30, 50), l2: rand(40, 50) };
+    },
+    vibrant: (base) => {
+      const hue2 = wrapHue(base + randSign() * rand(40, 60));
+      const l = rand(50, 60);
+      return { h1: base, s1: rand(75, 95), l1: l, h2: hue2, s2: rand(75, 95), l2: l };
+    },
+    sunset: (base) => {
+      const hue2 = wrapHue(base + randSign() * rand(150, 180));
+      const s = rand(70, 90), l = rand(50, 60);
+      return { h1: base, s1: s, l1: l, h2: hue2, s2: s, l2: l };
+    },
+    monochrome: (base) => {
+      return { h1: base, s1: rand(60, 80), l1: rand(55, 65), h2: base, s2: rand(30, 50), l2: rand(35, 45) };
+    },
+    pastel: (base) => {
+      const hue2 = wrapHue(base + rand(-15, 15));
+      return { h1: base, s1: rand(25, 40), l1: rand(80, 90), h2: hue2, s2: rand(25, 40), l2: rand(80, 90) };
+    },
+  };
+
+  function roll() {
+    const base = Number(hueSlider.value);
+    current = THEME_RULES[activeTheme](base);
+    render();
+  }
+
+  function render() {
+    const hex1 = hslToHex(current.h1, current.s1, current.l1);
+    const hex2 = hslToHex(current.h2, current.s2, current.l2);
+
+    el("gr-swatch1").style.background = hex1;
+    el("gr-swatch2").style.background = hex2;
+    el("gr-hex1").textContent = hex1;
+    el("gr-hex2").textContent = hex2;
+
+    document.documentElement.style.setProperty("--gr-hex1", hex1);
+    document.documentElement.style.setProperty("--gr-hex2", hex2);
+
+    hueVal.textContent = `${hueSlider.value}°`;
+  }
+
+  function copyText(text, label) {
+    navigator.clipboard.writeText(text).then(() => {
+      window.Nova.toast(label || "Copied!", "success", 2000, { dedupe: false });
+    }).catch(() => {
+      window.Nova.toast("Couldn't copy — copy it manually", "error");
+    });
+  }
+
+  themePicker.addEventListener("click", (e) => {
+    const btn = e.target.closest(".gr-theme-pill");
+    if (!btn) return;
+    activeTheme = btn.dataset.themeName;
+    themePicker.querySelectorAll(".gr-theme-pill").forEach((p) => p.setAttribute("aria-pressed", String(p === btn)));
+    roll();
+  });
+
+  hueSlider.addEventListener("input", () => {
+    hueVal.textContent = `${hueSlider.value}°`;
+    if (lockHue.checked) roll();
+  });
+
+  el("gr-reroll").addEventListener("click", () => {
+    if (!lockHue.checked) {
+      hueSlider.value = rand(0, 359);
+    }
+    roll();
+  });
+
+  document.querySelectorAll("[data-copy-hex]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const hex = btn.dataset.copyHex === "1" ? el("gr-hex1").textContent : el("gr-hex2").textContent;
+      copyText(hex, `Copied ${hex}`);
+    });
+  });
+
+  el("gr-copy-both").addEventListener("click", () => {
+    copyText(`${el("gr-hex1").textContent} / ${el("gr-hex2").textContent}`, "Both hex codes copied!");
+  });
+
+  roll();
+})();
+</script>
+</body>
+</html>

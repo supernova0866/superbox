@@ -1,0 +1,112 @@
+/* Nova's Toolkit — Layout */
+
+.nova-page {
+  position: relative;
+  min-height: 100vh;
+  z-index: var(--z-content);
+}
+
+.nova-content {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-5) var(--space-10);
+}
+
+.nova-content--narrow {
+  max-width: 720px;
+}
+
+.nova-eyebrow {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  margin-bottom: var(--space-2);
+}
+
+.nova-h1 {
+  font-size: clamp(var(--fs-2xl), 5vw, var(--fs-3xl));
+  margin-bottom: var(--space-4);
+}
+
+.nova-h1 .accent {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.nova-lede {
+  font-size: var(--fs-md);
+  color: var(--text-dim);
+  max-width: 60ch;
+  margin-bottom: var(--space-8);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn--primary {
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-md);
+}
+
+.btn--ghost {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-5);
+}
+
+/* ---- Home page doodle layer ---- */
+.nova-doodle-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-doodles);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.nova-doodle {
+  position: absolute;
+  width: 64px;
+  opacity: 0.85;
+  animation: nova-float var(--float-dur, 6s) ease-in-out var(--float-delay, 0s) infinite;
+}
+
+@keyframes nova-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
+
+@media (max-width: 600px) {
+  .nova-content {
+    padding: var(--space-8) var(--space-4);
+  }
+}

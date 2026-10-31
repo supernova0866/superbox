@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova's Toolkit</title>
+<meta name="description" content="Nova's Toolkit — Discord timestamp generator, embed previewer, gradient role color generator, and user lookup.">
+
+<!-- Theme engine runs first and synchronously to avoid a flash of the wrong theme -->
+<script src="core/js/theme-engine.js"></script>
+
+<link rel="stylesheet" href="core/css/reset.css">
+<link rel="stylesheet" href="core/css/variables.css">
+<link rel="stylesheet" href="core/css/themes/peak.css">
+<link rel="stylesheet" href="core/css/themes/flashbang.css">
+<link rel="stylesheet" href="core/css/themes/crime-against-color.css">
+<link rel="stylesheet" href="core/css/themes/gambling.css">
+<link rel="stylesheet" href="core/css/nav.css">
+<link rel="stylesheet" href="core/css/layout.css">
+<link rel="stylesheet" href="core/css/toast.css">
+</head>
+<body>
+
+<canvas id="nova-starfield"></canvas>
+
+<button class="nova-hamburger" id="nova-hamburger" aria-expanded="false" aria-controls="nova-sidebar" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<div class="nova-nav-overlay" id="nova-nav-overlay"></div>
+
+<nav class="nova-sidebar" id="nova-sidebar" data-open="false">
+  <div class="nova-sidebar-brand">Nova's Toolkit</div>
+
+  <div class="nova-sidebar-nav">
+    <a class="nova-sidebar-link" href="index.html">Home</a>
+
+    <div class="nova-sidebar-section-label">Tools</div>
+    <a class="nova-sidebar-link" href="tools/timestamp.html">Timestamp Generator</a>
+    <a class="nova-sidebar-link" href="tools/embed-previewer.html">Embed Previewer</a>
+    <a class="nova-sidebar-link" href="tools/gradient-roles.html">Gradient Role Colors</a>
+    <a class="nova-sidebar-link" href="tools/user-lookup.html">User Lookup</a>
+  </div>
+
+  <div class="nova-sidebar-themes">
+    <div class="nova-sidebar-section-label">Theme</div>
+    <button class="nova-theme-btn" data-theme-choice="peak">
+      <span class="nova-theme-swatch" style="background:#8b5cf6"></span> Peak Theme™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="flashbang">
+      <span class="nova-theme-swatch" style="background:#ec4899"></span> Flashbang™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="crime">
+      <span class="nova-theme-swatch" style="background:#39ff14"></span> Crime Against Color Theory™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="gambling">
+      <span class="nova-theme-swatch" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"></span> Gambling™
+    </button>
+  </div>
+</nav>
+
+<div class="nova-doodle-layer" id="nova-doodle-layer"></div>
+
+<main class="nova-page">
+  <div class="nova-content">
+    <p class="nova-eyebrow">Discord utilities, unreasonably nice ones</p>
+    <h1 class="nova-h1">Nova's <span class="accent">Toolkit</span></h1>
+    <p class="nova-lede">
+      A small set of Discord-adjacent tools that actually earn their place:
+      timestamps, embed previews, gradient role colors, and user lookups.
+      No filler, no fifteenth JSON formatter.
+    </p>
+
+    <div class="tool-grid">
+      <a class="card" href="tools/timestamp.html">
+        <h3>Timestamp Generator</h3>
+        <p style="color:var(--text-dim); margin-top: var(--space-2); font-size: var(--fs-sm);">
+          Pick a date, get every Discord timestamp format, shareable by link.
+        </p>
+      </a>
+      <a class="card" href="tools/embed-previewer.html">
+        <h3>Embed Previewer</h3>
+        <p style="color:var(--text-dim); margin-top: var(--space-2); font-size: var(--fs-sm);">
+          Build a Discord embed visually, copy the JSON straight into Wevo.
+        </p>
+      </a>
+      <a class="card" href="tools/gradient-roles.html">
+        <h3>Gradient Role Colors</h3>
+        <p style="color:var(--text-dim); margin-top: var(--space-2); font-size: var(--fs-sm);">
+          Pick a vibe, get two hex stops that actually work as a gradient role.
+        </p>
+      </a>
+      <a class="card" href="tools/user-lookup.html">
+        <h3>User Lookup</h3>
+        <p style="color:var(--text-dim); margin-top: var(--space-2); font-size: var(--fs-sm);">
+          Look up a Discord user by ID.
+        </p>
+      </a>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Doodle image manifest — drop PNGs into assets/doodles/ and list them here.
+  window.NOVA_DOODLES = [
+    // "assets/doodles/star.png",
+    // "assets/doodles/comet.png",
+  ];
+</script>
+<script src="core/js/gambling-theme.js"></script>
+<script src="core/js/nav.js"></script>
+<script src="core/js/starfield.js"></script>
+<script src="core/js/doodles.js"></script>
+<script src="core/js/toast.js"></script>
+</body>
+</html>

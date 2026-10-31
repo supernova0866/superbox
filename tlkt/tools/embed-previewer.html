@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embed Previewer — Nova's Toolkit</title>
+<meta name="description" content="Build a Discord embed visually and copy Wevo-ready JSON.">
+
+<script src="../core/js/theme-engine.js"></script>
+<link rel="stylesheet" href="../core/css/reset.css">
+<link rel="stylesheet" href="../core/css/variables.css">
+<link rel="stylesheet" href="../core/css/themes/peak.css">
+<link rel="stylesheet" href="../core/css/themes/flashbang.css">
+<link rel="stylesheet" href="../core/css/themes/crime-against-color.css">
+<link rel="stylesheet" href="../core/css/themes/gambling.css">
+<link rel="stylesheet" href="../core/css/nav.css">
+<link rel="stylesheet" href="../core/css/layout.css">
+<link rel="stylesheet" href="../core/css/toast.css">
+
+<style>
+  .ep-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .ep-layout { grid-template-columns: 1fr; }
+  }
+
+  .ep-section {
+    margin-bottom: var(--space-5);
+  }
+  .ep-section-title {
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+    margin-bottom: var(--space-3);
+  }
+  .ep-field {
+    margin-bottom: var(--space-3);
+  }
+  .ep-field label {
+    display: block;
+    font-size: var(--fs-sm);
+    color: var(--text-dim);
+    margin-bottom: var(--space-1);
+  }
+  .ep-field input[type="text"],
+  .ep-field input[type="url"],
+  .ep-field textarea {
+    width: 100%;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    color: var(--text);
+    font-size: var(--fs-sm);
+  }
+  .ep-field textarea {
+    min-height: 70px;
+    resize: vertical;
+    font-family: var(--font-body);
+  }
+
+  .ep-color-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .ep-color-row input[type="color"] {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    padding: 2px;
+    background: var(--surface-alt);
+  }
+  .ep-color-row input[type="text"] {
+    max-width: 140px;
+    font-family: var(--font-mono);
+  }
+
+  .ep-field-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    margin-bottom: var(--space-3);
+    background: var(--surface-alt);
+  }
+  .ep-field-block-row {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .ep-field-block-row input[type="text"] {
+    flex: 1;
+  }
+  .ep-inline-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--text-dim);
+  }
+  .ep-remove-field {
+    color: var(--error);
+    font-size: var(--fs-xs);
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--error);
+    border-radius: var(--radius-sm);
+  }
+
+  /* ---- Discord-accurate preview, fixed dark chat colors regardless of site theme ---- */
+  .ep-preview-wrap {
+    position: sticky;
+    top: var(--space-6);
+  }
+  .ep-discord-bg {
+    background: #313338;
+    border-radius: var(--radius-lg);
+    padding: var(--space-5);
+  }
+  .ep-embed {
+    display: flex;
+    max-width: 432px;
+    background: #2b2d31;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .ep-embed-bar {
+    width: 4px;
+    flex-shrink: 0;
+    background: #202225;
+  }
+  .ep-embed-body {
+    padding: 8px 16px 16px 12px;
+    font-family: "gg sans", "Helvetica Neue", sans-serif;
+    color: #dbdee1;
+    font-size: 14px;
+    min-width: 0;
+    flex: 1;
+  }
+  .ep-embed-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .ep-embed-author img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+  }
+  .ep-embed-title {
+    font-weight: 600;
+    color: #fff;
+    margin-top: 8px;
+    font-size: 16px;
+  }
+  .ep-embed-title a { color: #00a8fc; }
+  .ep-embed-desc {
+    margin-top: 8px;
+    white-space: pre-wrap;
+    line-height: 1.375;
+  }
+  .ep-embed-fields {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .ep-embed-field {
+    grid-column: span 2;
+  }
+  .ep-embed-field[data-inline="true"] {
+    grid-column: span 1;
+  }
+  .ep-embed-field-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  .ep-embed-field-value {
+    color: #dbdee1;
+    font-size: 14px;
+    white-space: pre-wrap;
+  }
+  .ep-embed-image img {
+    margin-top: 12px;
+    border-radius: 4px;
+    max-width: 100%;
+  }
+  .ep-embed-thumb img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    float: right;
+    margin-top: 8px;
+  }
+  .ep-embed-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #b5bac1;
+  }
+  .ep-embed-footer img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+  }
+
+  .ep-json-wrap {
+    margin-top: var(--space-6);
+  }
+  .ep-json {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--text-dim);
+    max-height: 260px;
+    overflow: auto;
+    white-space: pre;
+  }
+  .ep-actions {
+    display: flex;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="nova-starfield"></canvas>
+
+<button class="nova-hamburger" id="nova-hamburger" aria-expanded="false" aria-controls="nova-sidebar" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<div class="nova-nav-overlay" id="nova-nav-overlay"></div>
+
+<nav class="nova-sidebar" id="nova-sidebar" data-open="false">
+  <div class="nova-sidebar-brand">Nova's Toolkit</div>
+
+  <div class="nova-sidebar-nav">
+    <a class="nova-sidebar-link" href="../index.html">Home</a>
+
+    <div class="nova-sidebar-section-label">Tools</div>
+    <a class="nova-sidebar-link" href="timestamp.html">Timestamp Generator</a>
+    <a class="nova-sidebar-link" href="embed-previewer.html">Embed Previewer</a>
+    <a class="nova-sidebar-link" href="gradient-roles.html">Gradient Role Colors</a>
+    <a class="nova-sidebar-link" href="user-lookup.html">User Lookup</a>
+  </div>
+
+  <div class="nova-sidebar-themes">
+    <div class="nova-sidebar-section-label">Theme</div>
+    <button class="nova-theme-btn" data-theme-choice="peak">
+      <span class="nova-theme-swatch" style="background:#8b5cf6"></span> Peak Theme™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="flashbang">
+      <span class="nova-theme-swatch" style="background:#ec4899"></span> Flashbang™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="crime">
+      <span class="nova-theme-swatch" style="background:#39ff14"></span> Crime Against Color Theory™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="gambling">
+      <span class="nova-theme-swatch" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"></span> Gambling™
+    </button>
+  </div>
+</nav>
+
+<main class="nova-page">
+  <div class="nova-content">
+    <p class="nova-eyebrow">Tool</p>
+    <h1 class="nova-h1">Embed <span class="accent">Previewer</span></h1>
+    <p class="nova-lede">Build a Discord embed visually, see it rendered exactly as Discord would show it, then copy the JSON straight into Wevo.</p>
+
+    <div class="ep-layout">
+      <!-- Form -->
+      <div>
+        <div class="ep-section">
+          <div class="ep-section-title">Author</div>
+          <div class="ep-field"><label for="ep-author-name">Name</label><input type="text" id="ep-author-name" placeholder="Nova"></div>
+          <div class="ep-field"><label for="ep-author-url">Author URL</label><input type="url" id="ep-author-url" placeholder="https://..."></div>
+          <div class="ep-field"><label for="ep-author-icon">Author icon URL</label><input type="url" id="ep-author-icon" placeholder="https://..."></div>
+        </div>
+
+        <div class="ep-section">
+          <div class="ep-section-title">Body</div>
+          <div class="ep-field"><label for="ep-title">Title</label><input type="text" id="ep-title" placeholder="Embed title"></div>
+          <div class="ep-field"><label for="ep-url">Title URL (makes title a link)</label><input type="url" id="ep-url" placeholder="https://..."></div>
+          <div class="ep-field"><label for="ep-desc">Description</label><textarea id="ep-desc" placeholder="Embed description — supports markdown"></textarea></div>
+          <div class="ep-field">
+            <label for="ep-color-hex">Color</label>
+            <div class="ep-color-row">
+              <input type="color" id="ep-color" value="#8b5cf6">
+              <input type="text" id="ep-color-hex" value="#8B5CF6">
+            </div>
+          </div>
+        </div>
+
+        <div class="ep-section">
+          <div class="ep-section-title">Fields</div>
+          <div id="ep-fields-list"></div>
+          <button class="btn btn--ghost" id="ep-add-field" type="button">+ Add field</button>
+        </div>
+
+        <div class="ep-section">
+          <div class="ep-section-title">Images</div>
+          <div class="ep-field"><label for="ep-thumb">Thumbnail URL (small, top-right)</label><input type="url" id="ep-thumb" placeholder="https://..."></div>
+          <div class="ep-field"><label for="ep-image">Image URL (large, bottom)</label><input type="url" id="ep-image" placeholder="https://..."></div>
+        </div>
+
+        <div class="ep-section">
+          <div class="ep-section-title">Footer</div>
+          <div class="ep-field"><label for="ep-footer-text">Footer text</label><input type="text" id="ep-footer-text" placeholder="Footer text"></div>
+          <div class="ep-field"><label for="ep-footer-icon">Footer icon URL</label><input type="url" id="ep-footer-icon" placeholder="https://..."></div>
+          <div class="ep-field">
+            <label style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" id="ep-timestamp" style="width:auto;"> Include current timestamp
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="ep-preview-wrap">
+        <div class="ep-discord-bg">
+          <div class="ep-embed" id="ep-embed">
+            <div class="ep-embed-bar" id="ep-embed-bar"></div>
+            <div class="ep-embed-body" id="ep-embed-body"></div>
+          </div>
+        </div>
+
+        <div class="ep-json-wrap">
+          <div class="ep-section-title">Wevo-ready JSON</div>
+          <pre class="ep-json" id="ep-json"></pre>
+          <div class="ep-actions">
+            <button class="btn btn--primary" id="ep-copy-json" type="button">Copy JSON</button>
+            <a class="btn btn--ghost" id="ep-invite-wevo" href="#" target="_blank" rel="noopener">Invite Wevo</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  window.NOVA_DOODLES = [];
+  // TODO: replace with Wevo's real OAuth2 invite URL
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("ep-invite-wevo").href =
+      "https://discord.com/oauth2/authorize?client_id=YOUR_WEVO_CLIENT_ID&scope=bot%20applications.commands&permissions=0";
+  });
+</script>
+<script src="../core/js/gambling-theme.js"></script>
+<script src="../core/js/nav.js"></script>
+<script src="../core/js/starfield.js"></script>
+<script src="../core/js/toast.js"></script>
+
+<script>
+(function () {
+  let fields = []; // { id, name, value, inline }
+  let fieldIdCounter = 0;
+
+  const el = (id) => document.getElementById(id);
+  const colorPicker = el("ep-color");
+  const colorHex = el("ep-color-hex");
+  const fieldsList = el("ep-fields-list");
+
+  function escapeHtml(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function renderMarkdownLite(str) {
+    // Minimal Discord-ish markdown: bold, italic, inline code, links
+    let out = escapeHtml(str);
+    out = out.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    out = out.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    out = out.replace(/`(.+?)`/g, "<code style=\"background:#1e1f22;padding:1px 4px;border-radius:3px;\">$1</code>");
+    out = out.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" style="color:#00a8fc;" target="_blank" rel="noopener">$1</a>');
+    return out;
+  }
+
+  function addField(data) {
+    const id = ++fieldIdCounter;
+    fields.push({ id, name: data?.name || "", value: data?.value || "", inline: data?.inline || false });
+    renderFieldsForm();
+    updateAll();
+  }
+
+  function removeField(id) {
+    fields = fields.filter((f) => f.id !== id);
+    renderFieldsForm();
+    updateAll();
+  }
+
+  function renderFieldsForm() {
+    fieldsList.innerHTML = "";
+    fields.forEach((f) => {
+      const block = document.createElement("div");
+      block.className = "ep-field-block";
+      block.innerHTML = `
+        <div class="ep-field-block-row">
+          <input type="text" placeholder="Field name" data-field-id="${f.id}" data-field-prop="name" value="${escapeHtml(f.name)}">
+        </div>
+        <div class="ep-field-block-row">
+          <input type="text" placeholder="Field value" data-field-id="${f.id}" data-field-prop="value" value="${escapeHtml(f.value)}">
+        </div>
+        <div class="ep-field-block-row" style="justify-content: space-between; align-items:center;">
+          <label class="ep-inline-toggle">
+            <input type="checkbox" data-field-id="${f.id}" data-field-prop="inline" ${f.inline ? "checked" : ""} style="width:auto;"> Inline
+          </label>
+          <button type="button" class="ep-remove-field" data-remove-field="${f.id}">Remove</button>
+        </div>
+      `;
+      fieldsList.appendChild(block);
+    });
+  }
+
+  fieldsList.addEventListener("input", (e) => {
+    const t = e.target;
+    if (t.dataset.fieldId) {
+      const f = fields.find((x) => x.id === Number(t.dataset.fieldId));
+      if (!f) return;
+      if (t.dataset.fieldProp === "inline") f.inline = t.checked;
+      else f[t.dataset.fieldProp] = t.value;
+      updateAll();
+    }
+  });
+
+  fieldsList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-remove-field]");
+    if (btn) removeField(Number(btn.dataset.removeField));
+  });
+
+  el("ep-add-field").addEventListener("click", () => addField());
+
+  colorPicker.addEventListener("input", () => {
+    colorHex.value = colorPicker.value.toUpperCase();
+    updateAll();
+  });
+  colorHex.addEventListener("input", () => {
+    let v = colorHex.value.trim();
+    if (/^#?[0-9a-fA-F]{6}$/.test(v)) {
+      if (!v.startsWith("#")) v = "#" + v;
+      colorPicker.value = v;
+    }
+    updateAll();
+  });
+
+  function getState() {
+    return {
+      authorName: el("ep-author-name").value.trim(),
+      authorUrl: el("ep-author-url").value.trim(),
+      authorIcon: el("ep-author-icon").value.trim(),
+      title: el("ep-title").value.trim(),
+      url: el("ep-url").value.trim(),
+      description: el("ep-desc").value,
+      color: colorPicker.value,
+      thumbnail: el("ep-thumb").value.trim(),
+      image: el("ep-image").value.trim(),
+      footerText: el("ep-footer-text").value.trim(),
+      footerIcon: el("ep-footer-icon").value.trim(),
+      includeTimestamp: el("ep-timestamp").checked,
+      fields: fields.filter((f) => f.name || f.value),
+    };
+  }
+
+  function buildEmbedObject(state) {
+    const embed = {};
+    if (state.authorName) {
+      embed.author = { name: state.authorName };
+      if (state.authorUrl) embed.author.url = state.authorUrl;
+      if (state.authorIcon) embed.author.icon_url = state.authorIcon;
+    }
+    if (state.title) embed.title = state.title;
+    if (state.url) embed.url = state.url;
+    if (state.description) embed.description = state.description;
+    embed.color = parseInt(state.color.replace("#", ""), 16);
+    if (state.fields.length) {
+      embed.fields = state.fields.map((f) => ({
+        name: f.name || "\u200b",
+        value: f.value || "\u200b",
+        inline: !!f.inline,
+      }));
+    }
+    if (state.thumbnail) embed.thumbnail = { url: state.thumbnail };
+    if (state.image) embed.image = { url: state.image };
+    if (state.footerText || state.footerIcon) {
+      embed.footer = {};
+      if (state.footerText) embed.footer.text = state.footerText;
+      if (state.footerIcon) embed.footer.icon_url = state.footerIcon;
+    }
+    if (state.includeTimestamp) embed.timestamp = new Date().toISOString();
+    return embed;
+  }
+
+  function renderPreview(state) {
+    el("ep-embed-bar").style.background = state.color;
+
+    const body = el("ep-embed-body");
+    let html = "";
+
+    if (state.authorName) {
+      html += `<div class="ep-embed-author">`;
+      if (state.authorIcon) html += `<img src="${escapeHtml(state.authorIcon)}" alt="">`;
+      html += state.authorUrl
+        ? `<a href="${escapeHtml(state.authorUrl)}" target="_blank" rel="noopener" style="color:#fff;">${escapeHtml(state.authorName)}</a>`
+        : escapeHtml(state.authorName);
+      html += `</div>`;
+    }
+
+    if (state.thumbnail) {
+      html += `<div class="ep-embed-thumb"><img src="${escapeHtml(state.thumbnail)}" alt=""></div>`;
+    }
+
+    if (state.title) {
+      html += `<div class="ep-embed-title">${
+        state.url ? `<a href="${escapeHtml(state.url)}" target="_blank" rel="noopener">${escapeHtml(state.title)}</a>` : escapeHtml(state.title)
+      }</div>`;
+    }
+
+    if (state.description) {
+      html += `<div class="ep-embed-desc">${renderMarkdownLite(state.description)}</div>`;
+    }
+
+    if (state.fields.length) {
+      html += `<div class="ep-embed-fields">`;
+      state.fields.forEach((f) => {
+        html += `<div class="ep-embed-field" data-inline="${!!f.inline}">
+          <div class="ep-embed-field-name">${escapeHtml(f.name || "\u200b")}</div>
+          <div class="ep-embed-field-value">${renderMarkdownLite(f.value || "\u200b")}</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (state.image) {
+      html += `<div class="ep-embed-image"><img src="${escapeHtml(state.image)}" alt=""></div>`;
+    }
+
+    if (state.footerText || state.includeTimestamp) {
+      html += `<div class="ep-embed-footer">`;
+      if (state.footerIcon) html += `<img src="${escapeHtml(state.footerIcon)}" alt="">`;
+      const parts = [];
+      if (state.footerText) parts.push(escapeHtml(state.footerText));
+      if (state.includeTimestamp) parts.push(new Date().toLocaleString());
+      html += `<span>${parts.join(" • ")}</span>`;
+      html += `</div>`;
+    }
+
+    body.innerHTML = html;
+  }
+
+  function updateAll() {
+    const state = getState();
+    const embed = buildEmbedObject(state);
+    const payload = { embeds: [embed] };
+    el("ep-json").textContent = JSON.stringify(payload, null, 2);
+    renderPreview(state);
+  }
+
+  el("ep-copy-json").addEventListener("click", () => {
+    const text = el("ep-json").textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      window.Nova.toast("JSON copied — paste into Wevo", "success", 2500, { dedupe: false });
+    }).catch(() => {
+      window.Nova.toast("Couldn't copy — copy it manually", "error");
+    });
+  });
+
+  document.querySelectorAll("#ep-author-name, #ep-author-url, #ep-author-icon, #ep-title, #ep-url, #ep-desc, #ep-thumb, #ep-image, #ep-footer-text, #ep-footer-icon, #ep-timestamp")
+    .forEach((input) => input.addEventListener("input", updateAll));
+
+  // seed with one example field so the preview isn't empty on first load
+  addField({ name: "Field name", value: "Field value", inline: true });
+  addField({ name: "Another field", value: "Another value", inline: true });
+  el("ep-title").value = "Nova's Toolkit";
+  el("ep-desc").value = "This is a **live preview** of your embed. Edit anything on the left.";
+  updateAll();
+})();
+</script>
+</body>
+</html>

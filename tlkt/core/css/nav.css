@@ -1,0 +1,164 @@
+/* Nova's Toolkit — Nav (hamburger + sidebar) */
+
+.nova-hamburger {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: calc(var(--z-nav) + 1);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.nova-hamburger:hover {
+  transform: translateY(-1px);
+}
+
+.nova-hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--text);
+  transition: transform var(--dur-base) var(--ease-bounce), opacity var(--dur-fast) var(--ease-out);
+}
+
+.nova-hamburger[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nova-hamburger[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+.nova-hamburger[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.nova-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: var(--nav-width);
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border);
+  z-index: var(--z-nav);
+  padding: var(--space-8) var(--space-5) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  transform: translateX(-100%);
+  transition: transform var(--dur-base) var(--ease-out);
+  overflow-y: auto;
+}
+
+.nova-sidebar[data-open="true"] {
+  transform: translateX(0);
+}
+
+.nova-sidebar-brand {
+  font-family: var(--font-heading);
+  font-size: var(--fs-lg);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 0.02em;
+}
+
+.nova-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nova-sidebar-section-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin: var(--space-4) 0 var(--space-1);
+}
+
+.nova-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.nova-sidebar-link:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.nova-sidebar-link[aria-current="page"] {
+  background: var(--surface-alt);
+  color: var(--text);
+  box-shadow: inset 2px 0 0 var(--accent-a);
+}
+
+.nova-sidebar-themes {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nova-theme-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.nova-theme-btn:hover,
+.nova-theme-btn[aria-pressed="true"] {
+  border-color: var(--accent-a);
+  color: var(--text);
+}
+
+.nova-theme-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.nova-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: hsl(0 0% 0% / 0.5);
+  z-index: calc(var(--z-nav) - 1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.nova-nav-overlay[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (min-width: 900px) {
+  .nova-nav-overlay {
+    display: none;
+  }
+}

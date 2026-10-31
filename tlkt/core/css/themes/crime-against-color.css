@@ -1,0 +1,50 @@
+/* =========================================================
+   Crime Against Color Theory™ — fixed palette, deliberately
+   awful. Not randomized: curated to be exactly this offensive
+   on purpose. Comic Sans is not a bug here, it's a felony.
+   ========================================================= */
+
+[data-theme="crime"] {
+  --bg: #39ff14;
+  --bg-elevated: #2be000;
+  --surface: #d4d400;
+  --surface-alt: #ffe600;
+  --border: #ff00c8;
+
+  --text: #ff6700;
+  --text-dim: #cc3300;
+  --text-faint: #993300;
+
+  --accent-a: #ff00c8;
+  --accent-b: #00eaff;
+  --accent-gradient: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+
+  --success: #ff0000;
+  --error: #00ff00;
+  --warning: #ff00ff;
+  --info: #ffff00;
+
+  --shadow-color: 90 100% 50%;
+
+  --font-heading: "Comic Sans MS", "Papyrus", cursive;
+  --font-body: "Comic Sans MS", "Papyrus", cursive;
+}
+
+[data-theme="crime"] #nova-starfield {
+  display: none;
+}
+
+[data-theme="crime"] body {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--bg),
+    var(--bg) 40px,
+    var(--surface) 40px,
+    var(--surface) 80px
+  );
+}
+
+/* every border gets a little chaos */
+[data-theme="crime"] * {
+  text-shadow: 1px 1px 0 var(--accent-a), -1px -1px 0 var(--accent-b);
+}

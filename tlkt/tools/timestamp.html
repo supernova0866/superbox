@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timestamp Generator — Nova's Toolkit</title>
+<meta name="description" content="Generate Discord timestamp codes from any date/time, with a live preview and shareable links.">
+
+<script src="../core/js/theme-engine.js"></script>
+<link rel="stylesheet" href="../core/css/reset.css">
+<link rel="stylesheet" href="../core/css/variables.css">
+<link rel="stylesheet" href="../core/css/themes/peak.css">
+<link rel="stylesheet" href="../core/css/themes/flashbang.css">
+<link rel="stylesheet" href="../core/css/themes/crime-against-color.css">
+<link rel="stylesheet" href="../core/css/themes/gambling.css">
+<link rel="stylesheet" href="../core/css/nav.css">
+<link rel="stylesheet" href="../core/css/layout.css">
+<link rel="stylesheet" href="../core/css/toast.css">
+
+<style>
+  .ts-tabs {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    border-bottom: 1px solid var(--border);
+  }
+  .ts-tab {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-faint);
+    border-bottom: 2px solid transparent;
+    transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+  }
+  .ts-tab:hover { color: var(--text-dim); }
+  .ts-tab[aria-selected="true"] {
+    color: var(--text);
+    border-bottom-color: var(--accent-a);
+  }
+  .ts-tab[data-disabled="true"] {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .ts-panel { display: none; }
+  .ts-panel[data-active="true"] { display: block; }
+
+  .ts-input-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+    margin-bottom: var(--space-6);
+  }
+
+  .ts-input-row input[type="datetime-local"] {
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    color: var(--text);
+    font-size: var(--fs-base);
+  }
+
+  .ts-format-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .ts-format-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto auto;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    transition: box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+  }
+
+  .ts-format-row[data-highlighted="true"] {
+    box-shadow: 0 0 0 2px var(--accent-a);
+  }
+
+  .ts-format-label {
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+  }
+
+  .ts-format-preview {
+    font-size: var(--fs-md);
+  }
+
+  .ts-format-code {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--text-dim);
+    background: var(--surface-alt);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+
+  .ts-btn-group {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .ts-icon-btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-xs);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-dim);
+    transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+  }
+  .ts-icon-btn:hover {
+    border-color: var(--accent-a);
+    color: var(--text);
+  }
+
+  .ts-note {
+    font-size: var(--fs-xs);
+    color: var(--text-faint);
+    margin-top: var(--space-4);
+  }
+
+  .ts-unix-grid {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .ts-soon {
+    text-align: center;
+    padding: var(--space-8) var(--space-4);
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 640px) {
+    .ts-format-row {
+      grid-template-columns: 1fr;
+      gap: var(--space-2);
+    }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="nova-starfield"></canvas>
+
+<button class="nova-hamburger" id="nova-hamburger" aria-expanded="false" aria-controls="nova-sidebar" aria-label="Toggle navigation">
+  <span></span><span></span><span></span>
+</button>
+
+<div class="nova-nav-overlay" id="nova-nav-overlay"></div>
+
+<nav class="nova-sidebar" id="nova-sidebar" data-open="false">
+  <div class="nova-sidebar-brand">Nova's Toolkit</div>
+
+  <div class="nova-sidebar-nav">
+    <a class="nova-sidebar-link" href="../index.html">Home</a>
+
+    <div class="nova-sidebar-section-label">Tools</div>
+    <a class="nova-sidebar-link" href="timestamp.html">Timestamp Generator</a>
+    <a class="nova-sidebar-link" href="embed-previewer.html">Embed Previewer</a>
+    <a class="nova-sidebar-link" href="gradient-roles.html">Gradient Role Colors</a>
+    <a class="nova-sidebar-link" href="user-lookup.html">User Lookup</a>
+  </div>
+
+  <div class="nova-sidebar-themes">
+    <div class="nova-sidebar-section-label">Theme</div>
+    <button class="nova-theme-btn" data-theme-choice="peak">
+      <span class="nova-theme-swatch" style="background:#8b5cf6"></span> Peak Theme™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="flashbang">
+      <span class="nova-theme-swatch" style="background:#ec4899"></span> Flashbang™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="crime">
+      <span class="nova-theme-swatch" style="background:#39ff14"></span> Crime Against Color Theory™
+    </button>
+    <button class="nova-theme-btn" data-theme-choice="gambling">
+      <span class="nova-theme-swatch" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"></span> Gambling™
+    </button>
+  </div>
+</nav>
+
+<main class="nova-page">
+  <div class="nova-content">
+    <p class="nova-eyebrow">Tool</p>
+    <h1 class="nova-h1">Timestamp <span class="accent">Generator</span></h1>
+    <p class="nova-lede">Pick a date and time, get every format code ready to paste. Links are shareable — the exact time (and app mode) travel with the URL.</p>
+
+    <div class="ts-tabs" role="tablist">
+      <button class="ts-tab" role="tab" data-app="discord" aria-selected="true">Discord</button>
+      <button class="ts-tab" role="tab" data-app="unix" aria-selected="false">Unix</button>
+      <button class="ts-tab" role="tab" data-app="steam" aria-selected="false" data-disabled="true">Steam (soon)</button>
+    </div>
+
+    <div class="ts-input-row">
+      <input type="datetime-local" id="ts-datetime" step="1">
+      <button class="btn btn--ghost" id="ts-now">Use current time</button>
+      <button class="btn btn--primary" id="ts-share">Copy shareable link</button>
+    </div>
+
+    <!-- Discord panel -->
+    <section class="ts-panel" data-app-panel="discord" data-active="true">
+      <div class="ts-format-list" id="ts-format-list"></div>
+      <p class="ts-note">Previews approximate Discord's default rendering — actual display depends on each viewer's locale settings.</p>
+    </section>
+
+    <!-- Unix panel -->
+    <section class="ts-panel" data-app-panel="unix">
+      <div class="card ts-unix-grid">
+        <div>
+          <div class="ts-format-label">Unix seconds</div>
+          <div class="ts-format-preview" id="unix-seconds" style="font-family:var(--font-mono);"></div>
+        </div>
+        <div>
+          <div class="ts-format-label">Unix milliseconds</div>
+          <div class="ts-format-preview" id="unix-millis" style="font-family:var(--font-mono);"></div>
+        </div>
+        <div>
+          <div class="ts-format-label">ISO 8601</div>
+          <div class="ts-format-preview" id="unix-iso" style="font-family:var(--font-mono);"></div>
+        </div>
+        <div class="ts-btn-group">
+          <button class="ts-icon-btn" data-copy-target="unix-seconds">Copy seconds</button>
+          <button class="ts-icon-btn" data-copy-target="unix-millis">Copy ms</button>
+          <button class="ts-icon-btn" data-copy-target="unix-iso">Copy ISO</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Steam panel -->
+    <section class="ts-panel" data-app-panel="steam">
+      <div class="card ts-soon">
+        <p>Steam mode isn't wired up yet. The app-mode system is already extensible — this tab is here so links pointing at it don't break.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+  window.NOVA_DOODLES = [];
+</script>
+<script src="../core/js/gambling-theme.js"></script>
+<script src="../core/js/nav.js"></script>
+<script src="../core/js/starfield.js"></script>
+<script src="../core/js/toast.js"></script>
+
+<script>
+(function () {
+  const FORMATS = [
+    { code: "t", label: "Short time" },
+    { code: "T", label: "Long time" },
+    { code: "d", label: "Short date" },
+    { code: "D", label: "Long date" },
+    { code: "f", label: "Short date/time" },
+    { code: "F", label: "Long date/time" },
+    { code: "R", label: "Relative" },
+  ];
+
+  const dtInput = document.getElementById("ts-datetime");
+  const nowBtn = document.getElementById("ts-now");
+  const shareBtn = document.getElementById("ts-share");
+  const formatList = document.getElementById("ts-format-list");
+  const tabs = document.querySelectorAll(".ts-tab");
+  const panels = document.querySelectorAll("[data-app-panel]");
+
+  const params = new URLSearchParams(window.location.search);
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+
+  function toDatetimeLocalValue(date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
+
+  function getSelectedDate() {
+    const val = dtInput.value;
+    if (!val) return new Date();
+    return new Date(val);
+  }
+
+  function formatRelative(date) {
+    const diffMs = date.getTime() - Date.now();
+    const diffSec = Math.round(diffMs / 1000);
+    const abs = Math.abs(diffSec);
+    const units = [
+      ["year", 31536000], ["month", 2592000], ["week", 604800],
+      ["day", 86400], ["hour", 3600], ["minute", 60], ["second", 1],
+    ];
+    for (const [unit, secs] of units) {
+      if (abs >= secs || unit === "second") {
+        const value = Math.round(diffSec / secs);
+        const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+        return rtf.format(value, unit);
+      }
+    }
+    return "now";
+  }
+
+  function buildPreviews(date) {
+    const t = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const T = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const d = date.toLocaleDateString("en-GB");
+    const D = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    const f = `${D} ${t}`;
+    const F = `${date.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} ${t}`;
+    const R = formatRelative(date);
+    return { t, T, d, D, f, F, R };
+  }
+
+  function render() {
+    const date = getSelectedDate();
+    const unixSeconds = Math.floor(date.getTime() / 1000);
+    const previews = buildPreviews(date);
+    const highlightFormat = params.get("f");
+
+    formatList.innerHTML = "";
+    FORMATS.forEach(({ code, label }) => {
+      const row = document.createElement("div");
+      row.className = "card ts-format-row";
+      row.dataset.format = code;
+      if (highlightFormat === code) row.setAttribute("data-highlighted", "true");
+
+      const codeStr = `<t:${unixSeconds}:${code}>`;
+
+      row.innerHTML = `
+        <div class="ts-format-label">${label}</div>
+        <div class="ts-format-preview">${previews[code]}</div>
+        <div class="ts-format-code">${codeStr}</div>
+        <div class="ts-btn-group">
+          <button class="ts-icon-btn" data-copy="${codeStr}">Copy</button>
+          <button class="ts-icon-btn" data-share-format="${code}">Link</button>
+        </div>
+      `;
+      formatList.appendChild(row);
+    });
+
+    document.getElementById("unix-seconds").textContent = unixSeconds;
+    document.getElementById("unix-millis").textContent = date.getTime();
+    document.getElementById("unix-iso").textContent = date.toISOString();
+
+    if (highlightFormat) {
+      const el = formatList.querySelector(`[data-format="${highlightFormat}"]`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      window.Nova.toast("Copied!", "success", 2000, { dedupe: false });
+    }).catch(() => {
+      window.Nova.toast("Couldn't copy — copy it manually", "error");
+    });
+  }
+
+  formatList.addEventListener("click", (e) => {
+    const copyBtn = e.target.closest("[data-copy]");
+    if (copyBtn) {
+      copyText(copyBtn.dataset.copy);
+      return;
+    }
+    const shareBtn = e.target.closest("[data-share-format]");
+    if (shareBtn) {
+      const date = getSelectedDate();
+      const unixSeconds = Math.floor(date.getTime() / 1000);
+      const url = new URL(window.location.href);
+      url.searchParams.set("app", "discord");
+      url.searchParams.set("t", unixSeconds);
+      url.searchParams.set("f", shareBtn.dataset.shareFormat);
+      copyText(url.toString());
+    }
+  });
+
+  document.querySelectorAll("[data-copy-target]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(btn.dataset.copyTarget);
+      if (target) copyText(target.textContent);
+    });
+  });
+
+  nowBtn.addEventListener("click", () => {
+    dtInput.value = toDatetimeLocalValue(new Date());
+    render();
+  });
+
+  shareBtn.addEventListener("click", () => {
+    const date = getSelectedDate();
+    const unixSeconds = Math.floor(date.getTime() / 1000);
+    const activeTab = document.querySelector('.ts-tab[aria-selected="true"]');
+    const url = new URL(window.location.href);
+    url.searchParams.set("app", activeTab ? activeTab.dataset.app : "discord");
+    url.searchParams.set("t", unixSeconds);
+    url.searchParams.delete("f");
+    copyText(url.toString());
+  });
+
+  dtInput.addEventListener("input", render);
+
+  function setActiveTab(app) {
+    tabs.forEach((tab) => {
+      const isActive = tab.dataset.app === app;
+      tab.setAttribute("aria-selected", String(isActive));
+    });
+    panels.forEach((panel) => {
+      panel.setAttribute("data-active", String(panel.dataset.appPanel === app));
+    });
+    const url = new URL(window.location.href);
+    url.searchParams.set("app", app);
+    window.history.replaceState({}, "", url);
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      if (tab.dataset.disabled === "true") return;
+      setActiveTab(tab.dataset.app);
+    });
+  });
+
+  // Init from URL params
+  const appParam = params.get("app");
+  if (appParam && ["discord", "unix", "steam"].includes(appParam)) {
+    setActiveTab(appParam);
+  }
+
+  const tParam = params.get("t");
+  if (tParam && !isNaN(Number(tParam))) {
+    dtInput.value = toDatetimeLocalValue(new Date(Number(tParam) * 1000));
+  } else {
+    dtInput.value = toDatetimeLocalValue(new Date());
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

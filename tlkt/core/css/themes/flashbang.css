@@ -1,0 +1,53 @@
+/* =========================================================
+   Flashbang™ — light mode. Soft animated gradient mesh
+   behind clean surfaces. Same accent family as Peak, tuned
+   for contrast on a bright background.
+   ========================================================= */
+
+[data-theme="flashbang"] {
+  --bg: #fdfbff;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #f3f0fb;
+  --border: #e4defa;
+
+  --text: #1a1730;
+  --text-dim: #4a4468;
+  --text-faint: #837d9e;
+
+  --accent-a: #7c3aed;
+  --accent-b: #ec4899;
+  --accent-gradient: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+
+  --success: #16a34a;
+  --error: #e11d48;
+  --warning: #d97706;
+  --info: #0891b2;
+
+  --shadow-color: 260 30% 70%;
+}
+
+[data-theme="flashbang"] #nova-starfield {
+  display: none;
+}
+
+[data-theme="flashbang"] body {
+  background:
+    radial-gradient(circle at 15% 20%, hsl(265 90% 88% / 0.6), transparent 40%),
+    radial-gradient(circle at 85% 15%, hsl(330 90% 88% / 0.55), transparent 40%),
+    radial-gradient(circle at 50% 90%, hsl(200 90% 88% / 0.5), transparent 45%),
+    var(--bg);
+  background-size: 200% 200%;
+  animation: flashbang-drift 18s ease-in-out infinite;
+}
+
+@keyframes flashbang-drift {
+  0%, 100% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  50% { background-position: 20% 30%, 80% 20%, 40% 80%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="flashbang"] body {
+    animation: none;
+  }
+}
